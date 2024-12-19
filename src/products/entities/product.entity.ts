@@ -48,5 +48,10 @@ export class Product {
   }
 
   @BeforeUpdate()
-  checkSkugUpdate() {}
+  checkSkugUpdate() {
+    this.slug = this.slug
+      .toLowerCase()
+      .replaceAll(' ', '_')
+      .replaceAll("'", '');
+  }
 }
