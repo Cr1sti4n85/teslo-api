@@ -8,7 +8,7 @@ import {
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from 'uuid';
 import { Product } from './entities/product.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -25,6 +25,9 @@ export class ProductsService {
 
     @InjectRepository(ProductImage)
     private readonly productImageRepository: Repository<ProductImage>,
+
+    //para obtener cadena de conexion y usuario de BD
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
@@ -67,9 +70,13 @@ export class ProductsService {
     const products = await this.productRepository.find({
       take: limit,
       skip: offset,
+      relations: { images: true }, //para traer data de tabla images
     });
 
-    return products;
+    return products.map((product) => ({
+      ...product,
+      images: product.images.map((img) => img.url),
+    }));
   }
 
   async findOne(val: string) {
@@ -86,6 +93,7 @@ export class ProductsService {
           title: val.toUpperCase(),
           slug: val.toLowerCase(),
         })
+        .leftJoinAndSelect('Product.images', 'images') //para traer data de tabla images
         .getOne();
     }
 
@@ -101,20 +109,60 @@ export class ProductsService {
     return product;
   }
 
+  async findOnePlain(term: string) {
+    const { images = [], ...rest } = await this.findOne(term);
+
+    return {
+      ...rest,
+      images: images.map((img) => img.url),
+    };
+  }
+
   async update(id: string, updateProductDto: UpdateProductDto) {
+    const { images, ...toUpdate } = updateProductDto;
+
+    const product = await this.productRepository.preload({
+      id,
+      ...toUpdate,
+    });
+
+    if (!product)
+      throw new NotFoundException(`Product with id ${id} not found`);
+
+    //el query runner permite ejecutar cierta cantidad de queries y si salen bien
+    //se hace commit, si no se hace rollback
+    //Create query Runner
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
     try {
-      const product = await this.productRepository.preload({
-        id: id,
-        ...updateProductDto,
-        images: [],
-      });
+      //si vienen imagenes, se van a borrar todas las imagenes previas
+      if (images) {
+        await queryRunner.manager.delete(ProductImage, { product: { id } });
 
-      if (!product)
-        throw new NotFoundException(`Product with id ${id} not found`);
+        product.images = images.map((img) =>
+          this.productImageRepository.create({ url: img }),
+        );
+      }
 
-      await this.productRepository.save(product);
-      return product;
+      await queryRunner.manager.save(product);
+
+      //si todo sale bien se hace commit
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+
+      //si se retorna product sin haber enviado imagenes, el producto retorna sin imagenes incluso
+      //si es que tuviera. Por eso se debe hacer otra consulta a la bd para retornar el producto con sus imagenes
+      return this.findOnePlain(id);
+      // return product;
+
+      // await this.productRepository.save(product);
     } catch (error) {
+      //si hay error se hace rollback
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
+
       this.handleDbExceptions(error);
     }
   }

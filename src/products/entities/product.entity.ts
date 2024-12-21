@@ -42,6 +42,7 @@ export class Product {
 
   @OneToMany(() => ProductImage, (productImage) => productImage.product, {
     cascade: true, //cuando se elimine un producto se eliminan las imagenes
+    eager: true, //traer imagenes al traer producto
   })
   images?: ProductImage[];
 
