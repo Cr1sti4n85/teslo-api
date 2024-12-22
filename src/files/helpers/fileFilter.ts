@@ -1,6 +1,6 @@
 //este necesita la request, el filename y una callback
 export const fileFilter = (
-  req: Express.Request,
+  _req: Express.Request,
   file: Express.Multer.File,
   cb: Function,
 ) => {
