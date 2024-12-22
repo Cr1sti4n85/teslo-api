@@ -9,7 +9,7 @@ import {
 import { ProductImage } from './product-image.entity';
 
 //Representacion de objeto en base de datos
-@Entity()
+@Entity({ name: 'products' })
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
