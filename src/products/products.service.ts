@@ -186,4 +186,15 @@ export class ProductsService {
       'Unexpected error. Check server logs',
     );
   }
+
+  //solo para modo desarrollo
+  async deleteAllProducts() {
+    const query = this.productRepository.createQueryBuilder('product');
+
+    try {
+      return await query.delete().where({}).execute();
+    } catch (error) {
+      this.handleDbExceptions(error);
+    }
+  }
 }
