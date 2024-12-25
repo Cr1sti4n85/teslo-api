@@ -2,13 +2,14 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
+import { LoginUserDto } from './dto/login-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -33,16 +34,35 @@ export class AuthService {
     }
   }
 
+  async login(loginUserDto: LoginUserDto) {
+    try {
+      const { password, email } = loginUserDto;
+      const user = await this.userRepository.findOne({
+        where: {
+          email,
+        },
+        select: { email: true, password: true },
+      });
+
+      if (!user) {
+        throw new Error();
+      }
+
+      if (!bcrypt.compareSync(password, user.password))
+        throw new UnauthorizedException('Not valid credentials');
+
+      return user;
+    } catch (error) {
+      this.handleDBErrors(error);
+    }
+  }
+
   findAll() {
     return `This action returns all auth`;
   }
 
   findOne(id: number) {
     return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
   }
 
   remove(id: number) {
@@ -53,6 +73,10 @@ export class AuthService {
   private handleDBErrors(error: any): never {
     if (error.code === '23505') {
       throw new BadRequestException(error.detail);
+    }
+
+    if (error.status === 401) {
+      throw new UnauthorizedException('Credentails are not valid');
     }
 
     console.log(error);

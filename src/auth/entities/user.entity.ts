@@ -8,7 +8,7 @@ export class User {
   @Column('text', { unique: true })
   email: string;
 
-  @Column('text')
+  @Column('text', { select: false }) //para que no aparezca la pass en query select
   password: string;
 
   @Column('text')
