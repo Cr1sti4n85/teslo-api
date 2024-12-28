@@ -3,20 +3,19 @@ import {
   ExecutionContext,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { User } from '../entities/user.entity';
 
 //custome decorator para obtener al usuario
-export const GetUser = createParamDecorator(
+export const RawHeaders = createParamDecorator(
   //la data es lo que se envia al ser invocado el decorador
   (data: string, context: ExecutionContext) => {
     const req = context.switchToHttp().getRequest();
-    const user = req.user as User;
+    const headers: string[] = req.rawHeaders;
 
-    if (!user)
+    if (!headers)
       throw new InternalServerErrorException(
         'The request could not be handled by the server',
       );
 
-    return !data ? user : user[data];
+    return headers;
   },
 );
