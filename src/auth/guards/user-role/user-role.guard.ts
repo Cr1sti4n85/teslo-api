@@ -18,10 +18,10 @@ export class UserRoleGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     //el reflector permite recibir y obtener la metadata
-    const validRoles: string[] = this.reflector.get(
-      META_ROLES,
+    const validRoles: string[] = this.reflector.getAllAndOverride(META_ROLES, [
       context.getHandler(),
-    );
+      context.getClass(),
+    ]);
 
     const req = context.switchToHttp().getRequest();
     const user = req.user as User;
