@@ -11,6 +11,7 @@ export const GetUser = createParamDecorator(
   (data: string, context: ExecutionContext) => {
     const req = context.switchToHttp().getRequest();
     const user = req.user as User;
+    // console.log('user', user);
 
     if (!user)
       throw new InternalServerErrorException(

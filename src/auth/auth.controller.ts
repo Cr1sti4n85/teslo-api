@@ -20,6 +20,9 @@ import { User } from './entities/user.entity';
 import { RawHeaders } from './decorators/get-rawHeaders.decorator';
 import { IncomingHttpHeaders } from 'http';
 import { UserRoleGuard } from './guards/user-role/user-role.guard';
+import { RoleProtected } from './decorators/role-protected/role-protected.decorator';
+import { ValidRoles } from './interfaces/valid-roles.interface';
+import { Auth } from './decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -53,11 +56,22 @@ export class AuthController {
     };
   }
 
+  //@SetMetadata('roles', ['admin', 'superuser']) //esta metadata se le pasa al UserRoleGuard
   //este get va a necesitar ciertos roles del usuario
   @Get('private2')
-  @SetMetadata('roles', ['admin', 'superuser']) //esta metadata se le pasa al UserRoleGuard
+  @RoleProtected(ValidRoles.admin) //este custom decorator reemplaza @SetMetadata
   @UseGuards(AuthGuard(), UserRoleGuard)
   privateRoute2(@GetUser() user: User) {
+    return {
+      ok: true,
+      message: 'succesful',
+      user,
+    };
+  }
+
+  @Get('private3')
+  @Auth(ValidRoles.superUser)
+  privateRoute3(@GetUser() user: User) {
     return {
       ok: true,
       message: 'succesful',
