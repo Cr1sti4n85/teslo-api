@@ -11,8 +11,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from 'uuid';
 import { Product } from './entities/product.entity';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { ProductImage } from './entities/product-image.entity';
+import { User } from '../auth/entities/user.entity';
 
 @Injectable()
 export class ProductsService {
@@ -30,7 +31,7 @@ export class ProductsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(createProductDto: CreateProductDto, user: User) {
     try {
       //esta validacion se hizo en la entity con beforeInsert()
       // if (!createProductDto.slug) {
@@ -50,6 +51,7 @@ export class ProductsService {
       //create in memory
       const product = this.productRepository.create({
         ...productDetails,
+        user,
         images: images.map((image) =>
           //por cada imagen del array se debe crear un registro en la tabla productImages
           this.productImageRepository.create({ url: image }),
@@ -118,7 +120,7 @@ export class ProductsService {
     };
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto, user: User) {
     const { images, ...toUpdate } = updateProductDto;
 
     const product = await this.productRepository.preload({
@@ -145,6 +147,8 @@ export class ProductsService {
           this.productImageRepository.create({ url: img }),
         );
       }
+
+      product.user = user;
 
       await queryRunner.manager.save(product);
 

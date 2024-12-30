@@ -18,7 +18,7 @@ export class SeedController {
   @Get()
   //para usar el Auth aca hay que expotar el modulo JwtStrategy y PassportModule
   // desde el AuthModule e importar en este modulo el AuthModule
-  @Auth(ValidRoles.admin)
+  // @Auth(ValidRoles.admin)
   executeSeed() {
     return this.seedService.runSeed();
   }
