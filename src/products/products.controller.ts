@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -17,7 +18,9 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/interfaces/valid-roles.interface';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
+import { Product } from './entities/product.entity';
 
+@ApiTags('Products') //nombre de la etiqueta. que aprace en la interfaz swagger
 @Controller('products')
 //@Auth() //el decorador a este nivel va a proteger toda ruta
 export class ProductsController {
@@ -25,7 +28,17 @@ export class ProductsController {
 
   @Post()
   @Auth(ValidRoles.admin)
-  create(@Body() createProductDto: CreateProductDto, @GetUser() user: User) {
+  @ApiResponse({
+    status: 201,
+    description: 'Product was created',
+    type: Product,
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Token not valid. Forbidden' })
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @GetUser() user: User,
+  ): Promise<any> {
     return this.productsService.create(createProductDto, user);
   }
 
