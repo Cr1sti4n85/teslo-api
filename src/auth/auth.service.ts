@@ -51,7 +51,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new Error();
+        throw new Error('No User found');
       }
 
       if (!bcrypt.compareSync(password, user.password))
