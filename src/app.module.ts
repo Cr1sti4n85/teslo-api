@@ -14,12 +14,14 @@ import { MessagesWsModule } from './messages-ws/messages-ws.module';
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
+      url: process.env.URI,
       type: 'postgres',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
+      host: process.env.HOSTNAME,
+      ssl: true,
+      // port: Number(process.env.DB_PORT),
       database: process.env.DB_NAME,
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
+      // username: process.env.DB_USERNAME,
+      // password: process.env.DB_PASSWORD,
       autoLoadEntities: true, //carga automaticamente las entidades
       synchronize: true, //sincroniza cambios en entidades de db
     }),
